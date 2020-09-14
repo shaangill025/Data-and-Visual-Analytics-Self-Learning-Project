@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+
+<!-- run: http-server & -->
+
+<head>
+  <style>
+    <!-- define CSS rules -->
+  </style>
+  <title>Running Total of TMDb Movies by Year</title>
+</head>
+
+<body>
+
+  <script src="lib/d3/d3.min.js"></script>
+  <script src="lib/d3-dsv/d3-dsv.min.js"></script>
+  <script src="lib/d3-fetch/d3-fetch.min.js"></script>
+
+  <script>
+    var reqd_data=[];
+    // define the dimensions and margins for the graph
+    var width = 1400;
+    var height = 600;
+    var barPadding = 5;
+    var padding = 40;
+    var reqd_data = [];
+
+
+
+    // define function to parse time in years format
+    
+    // Get the data
+	  var pathToCsv = "q3.csv";		// path to csv
+    var formatTime = d3.timeFormat("%Y");
+    var parseTime = d3.timeParse("%Y");
+
+
+
+    d3.dsv(",", pathToCsv).then(function(data){
+      for(var i=0;i<data.length;i++){
+          reqd_data.push([parseTime(data[i].year), +data[i].running_total]);
+      }
+  
+      var svg = d3.select("body").append("svg").attr("width", width).attr("height", height);
+    
+      var xScale = d3.scaleTime()
+                .domain([d3.min(reqd_data, function(d) { return d[0]; }),d3.max(reqd_data, function(d) { return d[0]; })])
+                .range([padding, width - padding]);
+      var yScale = d3.scaleLinear()
+                .domain([0, d3.max(reqd_data, function(d) {return d[1];})])
+                .range([height-padding, padding]);
+
+      var xAxis = d3.axisBottom(xScale).tickFormat(formatTime)
+            .tickValues(d3.timeYear.every(3).range(d3.min(reqd_data, function(d) { return d[0]; }), d3.max(reqd_data, function(d) { return d[0]; })));
+      var yAxis = d3.axisLeft(yScale).ticks(10);
+      svg.selectAll("rect").data(reqd_data).enter().append("rect").attr("x", function(d) {return xScale(d[0])}).attr("y", function(d) {return yScale(d[1])}).attr("width", width / reqd_data.length - barPadding).attr("height", function(d) {return height - yScale(d[1])-padding}).attr("fill", "blue");
+      svg.append("g").attr("class", "axis").attr("transform", "translate(0," + (height - padding) + ")").call(xAxis);
+      svg.append("g").attr("class", "yxis").attr("transform", "translate(" + 2*padding + ",0)").call(yAxis);
+      svg.append("text").attr("x", width/2).attr("y", padding/2).attr("text-anchor", "middle").text("Running Totoal of TMDb Movies by Year");
+      svg.append("text").attr("class", "x label").attr("text-anchor", "end").attr("x", width/2).attr("y", height - 6).text("Year");
+      svg.append("text").attr("class", "y label").attr("text-anchor", "end").attr("y", 15).attr("x", -height/2).attr("transform", "rotate(-90)").text("Running Total");
+      svg.append("text").attr("x", width-2*padding).attr("y", height-barPadding).text("sgill37");
+    }).catch(function (error) {
+      console.log(error);
+    }); 
+  </script>
+
+</body>
